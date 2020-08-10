@@ -68,6 +68,8 @@ class New_users_from_api(Save_data_base):
                 
         )
         p_db.save()
+        return 'The operation of adding new data was successful'
+
 
 if __name__=='__main__':
     save_new=New_users_from_api()

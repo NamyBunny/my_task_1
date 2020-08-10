@@ -5,11 +5,13 @@ from dateutil.parser import parse
 import re
 from main import Save_data_base
 from new_data_from_api import New_users_from_api
+import pprint
 
 class My_functions():
     def averag_age(self, for_whom:str)->str:
         list_of_men_age=[]
         list_of_women_age=[]
+        print(len(People.select()))
         for person in People.select():
             if person.gender=='female':
                 list_of_women_age.append(person.dob_age)
@@ -23,14 +25,14 @@ class My_functions():
         average_age=str(round(sum(list_of_all_person_age)/len(list_of_all_person_age),1))
         
         if for_whom=='male':
-            print('Average age of men is '+average_age_of_men+' years')
+            return('Average age of men is '+average_age_of_men+' years')
         if for_whom=='female':
-            print('Average age of women is '+average_age_of_women+' years')
+            return('Average age of women is '+average_age_of_women+' years')
         if for_whom=='middle':
-            print('Average age of all people is '+average_age+' years')
+            return('Average age of all people is '+average_age+' years')
         if for_whom=='all':   
-            print('Average age of women is '+average_age_of_women+' years \n\t Average age of men is '
-            +average_age_of_men+' years \n\t Average age of all people is '+average_age+' years')
+            return('Average age of women is '+average_age_of_women+' years \n\t Average age of men is '
+            +str(average_age_of_men)+' years \n\t Average age of all people is '+average_age+' years')
 
 
     def percentage_of_women_and_men(self, gender:str)->str:
@@ -43,9 +45,9 @@ class My_functions():
                 count_of_men+=1
         all_count=count_of_women+count_of_men
         if gender=='female':
-            print('Percentage of women is '+str(count_of_women/all_count*100)+' %')
+            return('Percentage of women is '+str(round(count_of_women/all_count*100,2))+' %')
         if gender=='male':
-            print('Percentage of men is '+str(count_of_men/all_count*100)+' %')
+            return('Percentage of men is '+str(round(count_of_men/all_count*100,2))+' %')
 
 
     def most_popular_cities(self, number_of_cities:int) ->str:
@@ -59,15 +61,16 @@ class My_functions():
         sort_citi= sorted(citi_count.items(), key=lambda x: x[1], reverse=True)
         
         count_of_iteration=0
+        citi_list=[]
         for citi, num in sort_citi:
             count_of_iteration+=1
             if count_of_iteration==1 and number_of_cities!=0:
-                print(str(citi)+' was found in the database '+str(num)+' times. Is this the most popular city?')
+                citi_list.append(str(citi)+' was found in the database '+str(num)+' times. Is this the most popular city?')
             elif count_of_iteration<=number_of_cities:
-                print(str(citi)+' was found in the database '+str(num)+' times')
+                citi_list.append(str(citi)+' was found in the database '+str(num)+' times')
             else:
                 break
-         
+        return citi_list
 
     def most_popular_passwords(self, number_of_passwords:int) ->str:
         list_of_passwords=[]
@@ -79,34 +82,34 @@ class My_functions():
         sort_passwords= sorted(password_count.items(), key=lambda x: x[1], reverse=True)
         
         count_of_iteration=0
+        passwords_list=[]
         for password, num in sort_passwords:
             count_of_iteration+=1
             if count_of_iteration==1 and number_of_passwords!=0:
-                print('"'+str(password)+'"'+' was found in the database '+str(num)+' times. Is this the most popular password?')
+                passwords_list.append('"'+str(password)+'"'+' was found in the database '+str(num)+' times. Is this the most popular password?')
             elif len(sort_passwords)<number_of_passwords:
-                print('There are not so many passwords')
-                break
+                 passwords_list.append('There are not so many passwords')
             elif count_of_iteration<=number_of_passwords:
-                print('"'+str(password)+'"'+' was found in the database '+str(num)+' times')
+                 passwords_list.append('"'+str(password)+'"'+' was found in the database '+str(num)+' times')
             else:
                 break
-        
+        return passwords_list
 
     def born_in_between_dates(self,date1:str, date2:str) ->str:
         date1=parse(date1)
         date2=parse(date2)
+
         if date1>date2:
             later_date=date1
             earlier_date=date2
         else:
             later_date=date2
             earlier_date=date1
-
-        print(later_date)
+        date_list=[]
         for person in People.select():
             if person.dob_date<=later_date and person.dob_date>=earlier_date:
-                print(str(person.title)+' '+str(person.first_name)+' '+str(person.last_name)+' was born in '+str(person.dob_date.date()))
-
+                date_list.append(str(person.title)+' '+str(person.first_name)+' '+str(person.last_name)+' was born in '+str(person.dob_date.date()))
+        return date_list
     def password_strength(self):
         password_count={}
         for person in People.select():
@@ -117,15 +120,14 @@ class My_functions():
                 count+=2
             if re.search('[a-z]', person.password):
                 count+=1
-            if re.search('[!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~]', person.password):
+            if re.search('''[!"#$%&'()*+,-./:;<=>?@[]^_\\`{|}~]''', person.password):
                 count+=3
             if len(person.password)>=8:
                 count+=5
             password_count.update({person.password:count})
         
         sort_passwords= sorted(password_count.items(), key=lambda x: x[1], reverse=True)
-        print('The strongest password is ' +'"'+str(sort_passwords[0])+'"'+'.')
-
+        return('The strongest password is ' +'"'+str(sort_passwords[0])+'"'+'.')
 
 
 
@@ -148,7 +150,7 @@ class Script_manager(My_functions,New_users_from_api):
         '-percentage',
         type=str,
         default='Nothing',
-        help='Enter: female, male, all',
+        help='Enter: female, male',
         dest="gender")
 
         parser.add_argument(
@@ -209,35 +211,40 @@ class Script_manager(My_functions,New_users_from_api):
         args = parser.parse_args()
         # age-------------------------------------------------------------------
         if args.age !='Nothing':
-            super(Script_manager, self).averag_age(args.age)
+            return(super(Script_manager, self).averag_age(args.age))
         # percentage------------------------------------------------------------
         if args.gender !='Nothing':
-            super(Script_manager, self).percentage_of_women_and_men(args.gender)
+            return(super(Script_manager, self).percentage_of_women_and_men(args.gender))
         # cities----------------------------------------------------------------
         if args.number_of_cities !=0:
-            super(Script_manager, self).most_popular_cities(args.number_of_cities)
+            return(super(Script_manager, self).most_popular_cities(args.number_of_cities))
         # passwords-------------------------------------------------------------
         if args.number_of_passwords !=0:
-            super(Script_manager, self).most_popular_passwords(args.number_of_passwords)
+            return(super(Script_manager, self).most_popular_passwords(args.number_of_passwords))
         # betwen dates--------------------------------------------------------------
         if args.date1 !='Nothing' and args.date2 !='Nothing':
-            super(Script_manager, self).born_in_between_dates(args.date1, args.date2)
+            return(super(Script_manager, self).born_in_between_dates(args.date1, args.date2))
         # password-strength----------------------------------------------------------
         if args.password_strength==True:
-            super(Script_manager, self).password_strength()
+            return(super(Script_manager, self).password_strength())
         # save db-----------------------------------------------------------------------
         if args.save_data==True:
-            super(Script_manager, self).save_db()
+            return(super(Script_manager, self).save_db())
         # delete picture----------------------------------------------------------------
         if args.delete_picture==True:
-            super(Script_manager, self).delete_picture()
+            return(super(Script_manager, self).delete_picture())
         # new api data--------------------------------------------------------------------
         if args.new_data !=0:
-            super(Script_manager, self).save_new_db(args.new_data)
+            return(super(Script_manager, self).save_new_db(args.new_data))
 
 
 
 if __name__=="__main__":
     sc_manager = Script_manager()
-    sc_manager.script_manager()
+    if type (sc_manager.script_manager())==list:
+        sc_manager.script_manager().insert(0, sc_manager.script_manager())
+        pprint.pprint(sc_manager.script_manager())
+    else:
+        print(sc_manager.script_manager())
+    
     

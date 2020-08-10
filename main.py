@@ -121,7 +121,7 @@ class Save_data_base(Data_processing):
                 
         )
         p_db.save()
-
+        return 'The operation of adding new data was successful'
 if __name__=='__main__':
     save_bata=Save_data_base()
     save_bata.delete_picture()
